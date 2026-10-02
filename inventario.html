@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inventario Simple</title>
+
+<style>
+body{
+    font-family: Arial;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+input,button{
+    padding:10px;
+    margin:5px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:10px;
+    text-align:center;
+}
+
+th{
+    background:#0078D7;
+    color:white;
+}
+</style>
+</head>
+<body>
+
+<h2>Inventario de Productos</h2>
+
+<input type="text" id="producto" placeholder="Producto">
+<input type="number" id="cantidad" placeholder="Cantidad">
+
+<button onclick="agregar()">Agregar</button>
+
+<h3>Retirar Stock</h3>
+
+<input type="text" id="retProducto" placeholder="Producto">
+<input type="number" id="retCantidad" placeholder="Cantidad">
+
+<button onclick="retirar()">Retirar</button>
+
+<table>
+<thead>
+<tr>
+<th>Producto</th>
+<th>Cantidad</th>
+</tr>
+</thead>
+<tbody id="tabla"></tbody>
+</table>
+
+<script>
+
+let inventario =
+JSON.parse(localStorage.getItem("inventario")) || [];
+
+mostrar();
+
+function agregar(){
+
+let prod=document.getElementById("producto").value;
+let cant=parseInt(document.getElementById("cantidad").value);
+
+if(!prod || !cant) return;
+
+let existe=inventario.find(x=>x.producto===prod);
+
+if(existe){
+    existe.cantidad += cant;
+}else{
+    inventario.push({
+        producto:prod,
+        cantidad:cant
+    });
+}
+
+guardar();
+mostrar();
+}
+
+function retirar(){
+
+let prod=document.getElementById("retProducto").value;
+let cant=parseInt(document.getElementById("retCantidad").value);
+
+let existe=inventario.find(x=>x.producto===prod);
+
+if(!existe){
+    alert("Producto no encontrado");
+    return;
+}
+
+if(existe.cantidad < cant){
+    alert("Stock insuficiente");
+    return;
+}
+
+existe.cantidad -= cant;
+
+guardar();
+mostrar();
+}
+
+function guardar(){
+localStorage.setItem(
+"inventario",
+JSON.stringify(inventario)
+);
+}
+
+function mostrar(){
+
+let tabla=document.getElementById("tabla");
+
+tabla.innerHTML="";
+
+inventario.forEach(item=>{
+
+tabla.innerHTML += `
+<tr>
+<td>${item.producto}</td>
+<td>${item.cantidad}</td>
+</tr>
+`;
+
+});
+}
+
+</script>
+
+</body>
+</html>
