@@ -2,30 +2,63 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Inventario PATIO SUPPLY</title>
 
 <style>
+
 body{
-font-family: Arial;
-max-width: 800px;
-margin: 20px auto;
-padding: 20px;
-background-image: url("proyec.jpg");
-background-size: cover;
-background-position: center;
-background-repeat: no-repeat;
-background-attachment: fixed;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+
+    /* Imagen de fondo */
+    background-image: url("proyec.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
-input,button{
+/* Contenedor principal */
+.contenedor{
+    max-width: 900px;
+    margin: auto;
+    background: rgba(255,255,255,0.92);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+h2,h3{
+    text-align:center;
+    color:#0078D7;
+}
+
+input{
     padding:10px;
     margin:5px;
+    width:200px;
+}
+
+button{
+    padding:10px 20px;
+    color:white;
+    background:#0078D7;
+    border:none;
+    cursor:pointer;
+    border-radius:5px;
+}
+
+button:hover{
+    background:#005fa3;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
     margin-top:20px;
+    background:white;
 }
 
 th,td{
@@ -38,33 +71,57 @@ th{
     background:#0078D7;
     color:white;
 }
+
+.total{
+    margin-top:15px;
+    font-weight:bold;
+    text-align:right;
+    color:#0078D7;
+}
+
 </style>
 </head>
+
 <body>
 
-<h2>Inventario de Productos</h2>
+<div class="contenedor">
 
-<input type="text" id="producto" placeholder="Producto">
-<input type="number" id="cantidad" placeholder="Cantidad">
+    <h2>📦 Inventario PATIO SUPPLY</h2>
 
-<button onclick="agregar()">Agregar</button>
+    <h3>Ingresar Producto</h3>
 
-<h3>Retirar Stock</h3>
+    <input type="text" id="producto" placeholder="Producto">
+    <input type="number" id="cantidad" placeholder="Cantidad">
 
-<input type="text" id="retProducto" placeholder="Producto">
-<input type="number" id="retCantidad" placeholder="Cantidad">
+    <button onclick="agregar()">
+        Agregar
+    </button>
 
-<button onclick="retirar()">Retirar</button>
+    <hr>
 
-<table>
-<thead>
-<tr>
-<th>Producto</th>
-<th>Cantidad</th>
-</tr>
-</thead>
-<tbody id="tabla"></tbody>
-</table>
+    <h3>Retirar Stock</h3>
+
+    <input type="text" id="retProducto" placeholder="Producto">
+    <input type="number" id="retCantidad" placeholder="Cantidad">
+
+    <button onclick="retirar()">
+        Retirar
+    </button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+            </tr>
+        </thead>
+
+        <tbody id="tabla"></tbody>
+    </table>
+
+    <div class="total" id="totalProductos"></div>
+
+</div>
 
 <script>
 
@@ -75,72 +132,113 @@ mostrar();
 
 function agregar(){
 
-let prod=document.getElementById("producto").value;
-let cant=parseInt(document.getElementById("cantidad").value);
+    let prod =
+    document.getElementById("producto").value.trim();
 
-if(!prod || !cant) return;
+    let cant =
+    parseInt(document.getElementById("cantidad").value);
 
-let existe=inventario.find(x=>x.producto===prod);
+    if(!prod || cant <= 0){
+        alert("Ingrese un producto y cantidad válida");
+        return;
+    }
 
-if(existe){
-    existe.cantidad += cant;
-}else{
-    inventario.push({
-        producto:prod,
-        cantidad:cant
-    });
-}
+    let existe =
+    inventario.find(
+        x => x.producto.toLowerCase() === prod.toLowerCase()
+    );
 
-guardar();
-mostrar();
+    if(existe){
+        existe.cantidad += cant;
+    }else{
+        inventario.push({
+            producto: prod,
+            cantidad: cant
+        });
+    }
+
+    guardar();
+    mostrar();
+
+    document.getElementById("producto").value="";
+    document.getElementById("cantidad").value="";
 }
 
 function retirar(){
 
-let prod=document.getElementById("retProducto").value;
-let cant=parseInt(document.getElementById("retCantidad").value);
+    let prod =
+    document.getElementById("retProducto").value.trim();
 
-let existe=inventario.find(x=>x.producto===prod);
+    let cant =
+    parseInt(document.getElementById("retCantidad").value);
 
-if(!existe){
-    alert("Producto no encontrado");
-    return;
-}
+    let existe =
+    inventario.find(
+        x => x.producto.toLowerCase() === prod.toLowerCase()
+    );
 
-if(existe.cantidad < cant){
-    alert("Stock insuficiente");
-    return;
-}
+    if(!existe){
+        alert("Producto no encontrado");
+        return;
+    }
 
-existe.cantidad -= cant;
+    if(cant <= 0){
+        alert("Cantidad inválida");
+        return;
+    }
 
-guardar();
-mostrar();
+    if(existe.cantidad < cant){
+        alert("Stock insuficiente");
+        return;
+    }
+
+    existe.cantidad -= cant;
+
+    if(existe.cantidad === 0){
+        inventario =
+        inventario.filter(
+            x => x.producto !== existe.producto
+        );
+    }
+
+    guardar();
+    mostrar();
+
+    document.getElementById("retProducto").value="";
+    document.getElementById("retCantidad").value="";
 }
 
 function guardar(){
-localStorage.setItem(
-"inventario",
-JSON.stringify(inventario)
-);
+
+    localStorage.setItem(
+        "inventario",
+        JSON.stringify(inventario)
+    );
+
 }
 
 function mostrar(){
 
-let tabla=document.getElementById("tabla");
+    let tabla =
+    document.getElementById("tabla");
 
-tabla.innerHTML="";
+    tabla.innerHTML = "";
 
-inventario.forEach(item=>{
+    let total = 0;
 
-tabla.innerHTML += `
-<tr>
-<td>${item.producto}</td>
-<td>${item.cantidad}</td>
-</tr>
-`;
+    inventario.forEach(item=>{
 
-});
+        total += item.cantidad;
+
+        tabla.innerHTML += `
+        <tr>
+            <td>${item.producto}</td>
+            <td>${item.cantidad}</td>
+        </tr>`;
+    });
+
+    document.getElementById("totalProductos").innerHTML =
+    "Total de unidades en inventario: " + total;
 }
 
 </script>
