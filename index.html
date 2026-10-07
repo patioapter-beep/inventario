@@ -1,36 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>Inventario PATIO SUPPLY</title>
 
 <style>
 
 body{
     font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-
-    /* Imagen de fondo */
-    background-image: url("proyec.jpg");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    margin:0;
+    padding:20px;
+    background-image:url("proyec.jpg");
+    background-size:cover;
+    background-position:center;
+    background-attachment:fixed;
 }
 
-/* Contenedor principal */
 .contenedor{
-    max-width: 900px;
-    margin: auto;
-    background: rgba(255,255,255,0.92);
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    max-width:1200px;
+    margin:auto;
+    background:rgba(255,255,255,0.95);
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 0 20px rgba(0,0,0,.4);
 }
 
-h2,h3{
+h1{
     text-align:center;
     color:#0078D7;
 }
@@ -38,31 +36,45 @@ h2,h3{
 input{
     padding:10px;
     margin:5px;
-    width:200px;
 }
 
 button{
-    padding:10px 20px;
-    color:white;
-    background:#0078D7;
+    padding:10px 15px;
+    margin:5px;
     border:none;
-    cursor:pointer;
     border-radius:5px;
+    cursor:pointer;
+    color:white;
 }
 
-button:hover{
-    background:#005fa3;
+.btn-agregar{
+    background:#28a745;
+}
+
+.btn-retirar{
+    background:#dc3545;
+}
+
+.btn-excel{
+    background:#217346;
+}
+
+.btn-pdf{
+    background:#e63946;
+}
+
+.btn-eliminar{
+    background:#ff6600;
 }
 
 table{
     width:100%;
     border-collapse:collapse;
     margin-top:20px;
-    background:white;
 }
 
 th,td{
-    border:1px solid #ccc;
+    border:1px solid #ddd;
     padding:10px;
     text-align:center;
 }
@@ -72,11 +84,18 @@ th{
     color:white;
 }
 
-.total{
-    margin-top:15px;
+#historial{
+    margin-top:20px;
+    max-height:200px;
+    overflow:auto;
+    border:1px solid #ddd;
+    padding:10px;
+    background:#f7f7f7;
+}
+
+.stock-bajo{
+    color:red;
     font-weight:bold;
-    text-align:right;
-    color:#0078D7;
 }
 
 </style>
@@ -86,159 +105,315 @@ th{
 
 <div class="contenedor">
 
-    <h2>📦 Inventario PATIO SUPPLY</h2>
+<h1>📦 INVENTARIO PATIO SUPPLY</h1>
 
-    <h3>Ingresar Producto</h3>
+<h3>Registrar Producto</h3>
 
-    <input type="text" id="producto" placeholder="Producto">
-    <input type="number" id="cantidad" placeholder="Cantidad">
+<input type="text" id="codigo" placeholder="Código">
+<input type="text" id="producto" placeholder="Producto">
+<input type="text" id="descripcion" placeholder="Descripción">
+<input type="number" id="cantidad" placeholder="Cantidad">
 
-    <button onclick="agregar()">
-        Agregar
-    </button>
+<button class="btn-agregar" onclick="agregar()">
+Agregar
+</button>
 
-    <hr>
+<hr>
 
-    <h3>Retirar Stock</h3>
+<h3>Retirar Stock</h3>
 
-    <input type="text" id="retProducto" placeholder="Producto">
-    <input type="number" id="retCantidad" placeholder="Cantidad">
+<input type="text" id="retCodigo" placeholder="Código">
+<input type="number" id="retCantidad" placeholder="Cantidad">
 
-    <button onclick="retirar()">
-        Retirar
-    </button>
+<button class="btn-retirar" onclick="retirar()">
+Retirar
+</button>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Cantidad</th>
-            </tr>
-        </thead>
+<hr>
 
-        <tbody id="tabla"></tbody>
-    </table>
+<input
+type="text"
+id="buscar"
+placeholder="Buscar producto..."
+onkeyup="mostrar()">
 
-    <div class="total" id="totalProductos"></div>
+<table>
+
+<thead>
+<tr>
+<th>Código</th>
+<th>Producto</th>
+<th>Descripción</th>
+<th>Stock</th>
+<th>Acción</th>
+</tr>
+</thead>
+
+<tbody id="tabla"></tbody>
+
+</table>
+
+<button class="btn-excel" onclick="exportarExcel()">
+📊 Exportar Excel
+</button>
+
+<button class="btn-pdf" onclick="exportarPDF()">
+📄 Exportar PDF
+</button>
+
+<h3>Historial de Movimientos</h3>
+
+<div id="historial"></div>
 
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+s://cdnjs.cloudflare.com/ajax/libsjspdf.umd.min.jsscript>
+
 <script>
 
-let inventario =
+let inventario=
 JSON.parse(localStorage.getItem("inventario")) || [];
 
+let historial=
+JSON.parse(localStorage.getItem("historial")) || [];
+
 mostrar();
+mostrarHistorial();
 
 function agregar(){
 
-    let prod =
-    document.getElementById("producto").value.trim();
+let codigo=document.getElementById("codigo").value.trim();
+let producto=document.getElementById("producto").value.trim();
+let descripcion=document.getElementById("descripcion").value.trim();
+let cantidad=parseInt(document.getElementById("cantidad").value);
 
-    let cant =
-    parseInt(document.getElementById("cantidad").value);
+if(!codigo || !producto || cantidad<=0){
+alert("Complete los datos");
+return;
+}
 
-    if(!prod || cant <= 0){
-        alert("Ingrese un producto y cantidad válida");
-        return;
-    }
+let existe=inventario.find(x=>x.codigo===codigo);
 
-    let existe =
-    inventario.find(
-        x => x.producto.toLowerCase() === prod.toLowerCase()
-    );
+if(existe){
 
-    if(existe){
-        existe.cantidad += cant;
-    }else{
-        inventario.push({
-            producto: prod,
-            cantidad: cant
-        });
-    }
+existe.cantidad+=cantidad;
 
-    guardar();
-    mostrar();
+}else{
 
-    document.getElementById("producto").value="";
-    document.getElementById("cantidad").value="";
+inventario.push({
+codigo,
+producto,
+descripcion,
+cantidad
+});
+
+}
+
+registrarMovimiento(
+"INGRESO",
+codigo,
+cantidad
+);
+
+guardar();
+mostrar();
+
+document.getElementById("codigo").value="";
+document.getElementById("producto").value="";
+document.getElementById("descripcion").value="";
+document.getElementById("cantidad").value="";
 }
 
 function retirar(){
 
-    let prod =
-    document.getElementById("retProducto").value.trim();
+let codigo=document.getElementById("retCodigo").value.trim();
+let cantidad=parseInt(document.getElementById("retCantidad").value);
 
-    let cant =
-    parseInt(document.getElementById("retCantidad").value);
+let existe=inventario.find(
+x=>x.codigo===codigo
+);
 
-    let existe =
-    inventario.find(
-        x => x.producto.toLowerCase() === prod.toLowerCase()
-    );
+if(!existe){
+alert("Código no encontrado");
+return;
+}
 
-    if(!existe){
-        alert("Producto no encontrado");
-        return;
-    }
+if(existe.cantidad<cantidad){
+alert("Stock insuficiente");
+return;
+}
 
-    if(cant <= 0){
-        alert("Cantidad inválida");
-        return;
-    }
+existe.cantidad-=cantidad;
 
-    if(existe.cantidad < cant){
-        alert("Stock insuficiente");
-        return;
-    }
+registrarMovimiento(
+"SALIDA",
+codigo,
+cantidad
+);
 
-    existe.cantidad -= cant;
+guardar();
+mostrar();
 
-    if(existe.cantidad === 0){
-        inventario =
-        inventario.filter(
-            x => x.producto !== existe.producto
-        );
-    }
+document.getElementById("retCodigo").value="";
+document.getElementById("retCantidad").value="";
+}
 
-    guardar();
-    mostrar();
+function eliminarProducto(codigo){
 
-    document.getElementById("retProducto").value="";
-    document.getElementById("retCantidad").value="";
+if(!confirm("¿Eliminar producto?")){
+return;
+}
+
+inventario=inventario.filter(
+x=>x.codigo!==codigo
+);
+
+guardar();
+mostrar();
+
+}
+
+function registrarMovimiento(
+tipo,
+codigo,
+cantidad
+){
+
+let fecha=new Date().toLocaleString();
+
+historial.unshift(
+`${fecha} | ${tipo} | ${codigo} | ${cantidad}`
+);
+
+localStorage.setItem(
+"historial",
+JSON.stringify(historial)
+);
+
+mostrarHistorial();
+
+}
+
+function mostrarHistorial(){
+
+let div=
+document.getElementById("historial");
+
+div.innerHTML=
+historial.join("<br>");
+
 }
 
 function guardar(){
 
-    localStorage.setItem(
-        "inventario",
-        JSON.stringify(inventario)
-    );
+localStorage.setItem(
+"inventario",
+JSON.stringify(inventario)
+);
 
 }
 
 function mostrar(){
 
-    let tabla =
-    document.getElementById("tabla");
+let filtro=
+document.getElementById("buscar").value.toLowerCase();
 
-    tabla.innerHTML = "";
+let tabla=
+document.getElementById("tabla");
 
-    let total = 0;
+tabla.innerHTML="";
 
-    inventario.forEach(item=>{
+inventario
+.filter(item =>
+item.producto.toLowerCase().includes(filtro) ||
+item.codigo.toLowerCase().includes(filtro)
+)
+.forEach(item=>{
 
-        total += item.cantidad;
+let clase=
+item.cantidad<=5
+? "stock-bajo"
+: "";
 
-        tabla.innerHTML += `
-        <tr>
-            <td>${item.producto}</td>
-            <td>${item.cantidad}</td>
-        </tr>`;
-    });
+tabla.innerHTML += `
+<tr>
+<td>${item.codigo}</td>
+<td>${item.producto}</td>
+<td>${item.descripcion}</td>
+<td class="${clase}">${item.cantidad}</td>
+<td>
+<button
+class="btn-eliminar"
+onclick="eliminarProducto('${item.codigo}')">
+Eliminar
+</button>
+</td>
+</tr>
+`;
 
-    document.getElementById("totalProductos").innerHTML =
-    "Total de unidades en inventario: " + total;
+});
+
+}
+
+function exportarExcel(){
+
+let hoja=
+XLSX.utils.json_to_sheet(inventario);
+
+let libro=
+XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(
+libro,
+hoja,
+"Inventario"
+);
+
+XLSX.writeFile(
+libro,
+"Inventario_PATIO_SUPPLY.xlsx"
+);
+
+}
+
+async function exportarPDF(){
+
+const { jsPDF } = window.jspdf;
+
+const doc = new jsPDF();
+
+doc.setFontSize(18);
+
+doc.text(
+"INVENTARIO PATIO SUPPLY",
+20,
+20
+);
+
+let y=35;
+
+inventario.forEach(item=>{
+
+doc.text(
+`${item.codigo} - ${item.producto} - ${item.cantidad}`,
+20,
+y
+);
+
+y+=10;
+
+if(y>270){
+doc.addPage();
+y=20;
+}
+
+});
+
+doc.save(
+"Inventario_PATIO_SUPPLY.pdf"
+);
+
 }
 
 </script>
